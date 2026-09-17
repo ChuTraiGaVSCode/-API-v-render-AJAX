@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý Category</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">&larr; Trang chủ</a>
+    <span class="text-white">Quản lý Category</span>
+  </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+  <div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Danh sách Category</h4>
+      <button class="btn btn-success" onclick="showCreateNewCategoryModal()">
+        <i class="bi"></i>+ Thêm Category
+      </button>
+    </div>
+
+    <table class="table table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Id</th>
+          <th>Icon</th>
+          <th>Tên Category</th>
+          <th style="width:160px">Hành động</th>
+        </tr>
+      </thead>
+      <tbody id="categoryTableBody">
+        <!-- Dữ liệu được render bằng AJAX -->
+      </tbody>
+    </table>
+    <div id="emptyMsg" class="text-muted text-center py-3" style="display:none">Chưa có Category nào.</div>
+  </div>
+</div>
+
+<!-- Modal Thêm Category -->
+<div class="modal fade" tabindex="-1" id="createCategoryModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addCategoryForm" method="post" onsubmit="return false;" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Tên Category</label>
+            <input type="text" class="form-control" id="new_categoryName" name="categoryName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon (hình ảnh)</label>
+            <input type="file" class="form-control" id="new_icon" name="icon" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Thêm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cập nhật Category -->
+<div class="modal fade" tabindex="-1" id="updateCategoryModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="updateCategoryForm" method="post" onsubmit="return false;" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Cập nhật Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="up_categoryId" name="categoryId">
+          <div class="mb-3">
+            <label class="form-label">Tên Category</label>
+            <input type="text" class="form-control" id="up_categoryName" name="categoryName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Icon mới (bỏ trống nếu giữ icon cũ)</label>
+            <input type="file" class="form-control" id="up_icon" name="icon" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Cập nhật</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+var contextPath = ""; // deploy o root context; doi lai neu deploy duoi 1 sub-path
+
+var createCategoryModal, updateCategoryModal;
+
+$(document).ready(function () {
+    createCategoryModal = new bootstrap.Modal(document.getElementById('createCategoryModal'));
+    updateCategoryModal = new bootstrap.Modal(document.getElementById('updateCategoryModal'));
+    loadCategories();
+});
+
+/* ============ GET: load danh sach Category ============ */
+function loadCategories() {
+    $.ajax({
+        url: contextPath + '/api/category',
+        type: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            var list = res.body || [];
+            var tbody = $('#categoryTableBody');
+            tbody.empty();
+            if (list.length === 0) {
+                $('#emptyMsg').show();
+            } else {
+                $('#emptyMsg').hide();
+            }
+            for (var i = 0; i < list.length; i++) {
+                var c = list[i];
+                var iconHtml = c.icon
+                    ? '<img src="' + contextPath + '/uploads/' + c.icon + '" alt="">'
+                    : '<span class="text-muted">Không có</span>';
+
+                var tr = $('<tr>');
+                tr.append('<td>' + c.categoryId + '</td>');
+                tr.append('<td>' + iconHtml + '</td>');
+                tr.append('<td>' + escapeHtml(c.categoryName) + '</td>');
+                var actionsTd = $('<td>');
+                var editBtn = $('<button class="btn btn-sm btn-outline-warning me-1"><i class="bi"></i>Sửa</button>')
+                    .on('click', function () {
+                        var row = $(this).data();
+                        showEditCategoryModal(row.id, row.name, row.icon);
+                    })
+                    .data({ id: c.categoryId, name: c.categoryName, icon: c.icon });
+                var delBtn = $('<button class="btn btn-sm btn-outline-danger">Xóa</button>')
+                    .on('click', function () {
+                        deleteCategory($(this).data('id'));
+                    })
+                    .data('id', c.categoryId);
+                actionsTd.append(editBtn).append(delBtn);
+                tr.append(actionsTd);
+                tbody.append(tr);
+            }
+        },
+        error: function (xhr) {
+            alert('Lỗi tải danh sách Category: ' + xhr.status);
+        }
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, function (m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+}
+
+/* ============ POST: them Category ============ */
+function showCreateNewCategoryModal() {
+    $('#addCategoryForm')[0].reset();
+    createCategoryModal.show();
+}
+
+$('#addCategoryForm').on('submit', function (e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    $.ajax({
+        url: contextPath + '/api/category/addCategory',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (res) {
+            createCategoryModal.hide();
+            loadCategories();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+});
+
+/* ============ PUT: cap nhat Category ============ */
+function showEditCategoryModal(categoryId, categoryName, icon) {
+    $('#up_categoryId').val(categoryId);
+    $('#up_categoryName').val(categoryName);
+    $('#up_icon').val('');
+    updateCategoryModal.show();
+}
+
+$('#updateCategoryForm').on('submit', function (e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    $.ajax({
+        url: contextPath + '/api/category/updateCategory',
+        type: 'PUT',
+        data: formData,
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (res) {
+            updateCategoryModal.hide();
+            loadCategories();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+});
+
+/* ============ DELETE: xoa Category ============ */
+function deleteCategory(categoryId) {
+    if (!confirm('Bạn có chắc muốn xóa Category này?')) return;
+    $.ajax({
+        url: contextPath + '/api/category/deleteCategory?categoryId=' + categoryId,
+        type: 'DELETE',
+        dataType: 'json',
+        success: function (res) {
+            loadCategories();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+}
+</script>
+</body>
+</html>

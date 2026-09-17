@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý Product</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">&larr; Trang chủ</a>
+    <span class="text-white">Quản lý Product</span>
+  </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+  <div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Danh sách Product</h4>
+      <button class="btn btn-success" onclick="showCreateNewProductModal()">+ Thêm Product</button>
+    </div>
+
+    <table class="table table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Id</th>
+          <th>Hình</th>
+          <th>Tên sản phẩm</th>
+          <th>Category</th>
+          <th>Giá</th>
+          <th>Giảm giá</th>
+          <th>SL</th>
+          <th>Trạng thái</th>
+          <th style="width:160px">Hành động</th>
+        </tr>
+      </thead>
+      <tbody id="productTableBody"></tbody>
+    </table>
+    <div id="emptyMsg" class="text-muted text-center py-3" style="display:none">Chưa có Product nào.</div>
+  </div>
+</div>
+
+<!-- Modal Thêm Product -->
+<div class="modal fade" tabindex="-1" id="createProductModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="addProductForm" method="post" onsubmit="return false;" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Tên sản phẩm</label>
+            <input type="text" class="form-control" name="productName" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Category</label>
+            <select class="form-select" name="categoryId" id="new_categorySelect" required></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Đơn giá</label>
+            <input type="number" step="0.01" min="0" class="form-control" name="unitPrice" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Giảm giá</label>
+            <input type="number" step="0.01" min="0" class="form-control" name="discount" value="0" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Số lượng</label>
+            <input type="number" min="0" class="form-control" name="quantity" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" name="status">
+              <option value="1">Đang bán</option>
+              <option value="0">Ngừng bán</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Hình ảnh</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Mô tả</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Thêm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cập nhật Product -->
+<div class="modal fade" tabindex="-1" id="updateProductModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="updateProductForm" method="post" onsubmit="return false;" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Cập nhật Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-3">
+          <input type="hidden" name="productId" id="up_productId">
+          <div class="col-md-6">
+            <label class="form-label">Tên sản phẩm</label>
+            <input type="text" class="form-control" name="productName" id="up_productName" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Category</label>
+            <select class="form-select" name="categoryId" id="up_categorySelect" required></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Đơn giá</label>
+            <input type="number" step="0.01" min="0" class="form-control" name="unitPrice" id="up_unitPrice" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Giảm giá</label>
+            <input type="number" step="0.01" min="0" class="form-control" name="discount" id="up_discount" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Số lượng</label>
+            <input type="number" min="0" class="form-control" name="quantity" id="up_quantity" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" name="status" id="up_status">
+              <option value="1">Đang bán</option>
+              <option value="0">Ngừng bán</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Hình mới (bỏ trống nếu giữ hình cũ)</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Mô tả</label>
+            <textarea class="form-control" name="description" id="up_description" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-primary">Cập nhật</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+var contextPath = "";
+var createProductModal, updateProductModal;
+var categoryMap = {};
+
+$(document).ready(function () {
+    createProductModal = new bootstrap.Modal(document.getElementById('createProductModal'));
+    updateProductModal = new bootstrap.Modal(document.getElementById('updateProductModal'));
+    loadCategoriesForSelect(function () {
+        loadProducts();
+    });
+});
+
+/* ============ Load Category cho 2 combobox + map ten ============ */
+function loadCategoriesForSelect(callback) {
+    $.ajax({
+        url: contextPath + '/api/category',
+        type: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            var list = res.body || [];
+            var opts = '';
+            categoryMap = {};
+            for (var i = 0; i < list.length; i++) {
+                categoryMap[list[i].categoryId] = list[i].categoryName;
+                opts += '<option value="' + list[i].categoryId + '">' + escapeHtml(list[i].categoryName) + '</option>';
+            }
+            $('#new_categorySelect').html(opts);
+            $('#up_categorySelect').html(opts);
+            if (callback) callback();
+        }
+    });
+}
+
+/* ============ GET: load danh sach Product ============ */
+function loadProducts() {
+    $.ajax({
+        url: contextPath + '/api/product',
+        type: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            var list = res.body || [];
+            var tbody = $('#productTableBody');
+            tbody.empty();
+            $('#emptyMsg').toggle(list.length === 0);
+
+            for (var i = 0; i < list.length; i++) {
+                var p = list[i];
+                var imgHtml = p.images
+                    ? '<img src="' + contextPath + '/uploads/' + p.images + '" alt="">'
+                    : '<span class="text-muted">Không có</span>';
+                var categoryName = (p.category && p.category.categoryName)
+                    ? p.category.categoryName
+                    : (categoryMap[p.categoryId] || '');
+                var statusHtml = p.status == 1
+                    ? '<span class="badge badge-status-1">Đang bán</span>'
+                    : '<span class="badge badge-status-0">Ngừng bán</span>';
+
+                var tr = $('<tr>');
+                tr.append('<td>' + p.productId + '</td>');
+                tr.append('<td>' + imgHtml + '</td>');
+                tr.append('<td>' + escapeHtml(p.productName) + '</td>');
+                tr.append('<td>' + escapeHtml(categoryName) + '</td>');
+                tr.append('<td>' + formatMoney(p.unitPrice) + '</td>');
+                tr.append('<td>' + formatMoney(p.discount) + '</td>');
+                tr.append('<td>' + p.quantity + '</td>');
+                tr.append('<td>' + statusHtml + '</td>');
+
+                var actionsTd = $('<td>');
+                var editBtn = $('<button class="btn btn-sm btn-outline-warning me-1">Sửa</button>')
+                    .on('click', function () { showEditProductModal($(this).data('p')); })
+                    .data('p', p);
+                var delBtn = $('<button class="btn btn-sm btn-outline-danger">Xóa</button>')
+                    .on('click', function () { deleteProduct($(this).data('id')); })
+                    .data('id', p.productId);
+                actionsTd.append(editBtn).append(delBtn);
+                tr.append(actionsTd);
+                tbody.append(tr);
+            }
+        },
+        error: function (xhr) {
+            alert('Lỗi tải danh sách Product: ' + xhr.status);
+        }
+    });
+}
+
+function formatMoney(v) {
+    if (v === null || v === undefined) return '0';
+    return Number(v).toLocaleString('vi-VN');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, function (m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+}
+
+/* ============ POST: them Product ============ */
+function showCreateNewProductModal() {
+    $('#addProductForm')[0].reset();
+    createProductModal.show();
+}
+
+$('#addProductForm').on('submit', function (e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    $.ajax({
+        url: contextPath + '/api/product/addProduct',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (res) {
+            createProductModal.hide();
+            loadProducts();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+});
+
+/* ============ PUT: cap nhat Product ============ */
+function showEditProductModal(p) {
+    $('#up_productId').val(p.productId);
+    $('#up_productName').val(p.productName);
+    $('#up_unitPrice').val(p.unitPrice);
+    $('#up_discount').val(p.discount);
+    $('#up_quantity').val(p.quantity);
+    $('#up_status').val(String(p.status));
+    $('#up_description').val(p.description);
+    var categoryId = p.category ? p.category.categoryId : p.categoryId;
+    $('#up_categorySelect').val(categoryId);
+    $('#updateProductForm input[type=file]').val('');
+    updateProductModal.show();
+}
+
+$('#updateProductForm').on('submit', function (e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    $.ajax({
+        url: contextPath + '/api/product/updateProduct',
+        type: 'PUT',
+        data: formData,
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (res) {
+            updateProductModal.hide();
+            loadProducts();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+});
+
+/* ============ DELETE: xoa Product ============ */
+function deleteProduct(productId) {
+    if (!confirm('Bạn có chắc muốn xóa Product này?')) return;
+    $.ajax({
+        url: contextPath + '/api/product/deleteProduct?productId=' + productId,
+        type: 'DELETE',
+        dataType: 'json',
+        success: function (res) {
+            loadProducts();
+        },
+        error: function (xhr) {
+            alert('Lỗi: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.status));
+        }
+    });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+target/
+data/
+uploads/*
+!uploads/.gitkeep
+.idea/
+*.iml
+.classpath
+.project
+.settings/
